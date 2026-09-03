@@ -15,6 +15,13 @@
       "when": 1786622659052,
       "tag": "0001_orange_wolverine",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788354142723,
+      "tag": "0002_breezy_radioactive_man",
+      "breakpoints": true
     }
   ]
 }

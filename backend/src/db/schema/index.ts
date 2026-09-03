@@ -45,6 +45,7 @@ export {
 export {
   routines,
   routineSteps,
+  routineAnalyses,
   routineTypeEnum,
   stepFrequencyEnum,
 } from './routines.js';

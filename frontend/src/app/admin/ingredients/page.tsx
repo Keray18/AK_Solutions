@@ -119,7 +119,7 @@ export default function AdminIngredientsPage() {
     if (confirm('Are you sure you want to delete this ingredient?')) {
       try {
         await api.delete(`/ingredients/${id}`);
-        fetchIngredients(true);
+        fetchIngredientsRef();
       } catch (err) {
         console.error(err);
       }

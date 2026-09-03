@@ -1,42 +1,34 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import api from '@/services/api';
 
 export function AuthBootstrap({ children }: { children: React.ReactNode }) {
   const [isBootstrapped, setIsBootstrapped] = useState(false);
   const { login, logout, setLoading } = useAuthStore();
+  const hasAttemptedBootstrap = useRef(false);
 
   useEffect(() => {
-    let mounted = true;
-
+    if (hasAttemptedBootstrap.current) return;
+    hasAttemptedBootstrap.current = true;
+    
     async function initAuth() {
       try {
         setLoading(true);
         // Attempt to refresh the token using the HttpOnly cookie
         const response = await api.post('/auth/refresh');
         const { accessToken, user } = response.data.data;
-        if (mounted) {
-          login(user, accessToken);
-        }
+        login(user, accessToken);
       } catch {
-        if (mounted) {
-          logout();
-        }
+        logout();
       } finally {
-        if (mounted) {
-          setLoading(false);
-          setIsBootstrapped(true);
-        }
+        setLoading(false);
+        setIsBootstrapped(true);
       }
     }
 
     initAuth();
-
-    return () => {
-      mounted = false;
-    };
   }, [login, logout, setLoading]);
 
   // Don't render children until we know the initial auth state

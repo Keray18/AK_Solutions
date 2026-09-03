@@ -43,6 +43,7 @@ import skinProfileRoutes from './modules/skinProfiles/skinProfiles.routes.js';
 import onboardingRoutes from './modules/onboarding/onboarding.routes.js';
 import brandsRoutes from './modules/brands/brands.routes.js';
 import ingredientRoutes from './modules/ingredients/ingredients.routes.js';
+import { routineRoutes } from './modules/routines/routines.routes.js';
 import productRoutes from './modules/products/products.routes.js';
 import interactionRoutes from './modules/interactions/interactions.routes.js';
 
@@ -51,7 +52,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/skin-profile', skinProfileRoutes);
 app.use('/api/onboarding', onboardingRoutes);
 app.use('/api/admin/brands', brandsRoutes);
-// app.use('/api/routines', routineRoutes);
+app.use('/api/routines', routineRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/ingredients', ingredientRoutes);
 app.use('/api/interactions', interactionRoutes);

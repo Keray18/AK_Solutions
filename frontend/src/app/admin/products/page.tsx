@@ -101,7 +101,7 @@ export default function AdminProductsPage() {
         slug: product.slug,
         brandId: product.brand?.id || '',
         category: product.category || '',
-        price: product.price || '',
+        price: product.price != null ? String(product.price) : '',
         available: product.available,
       });
     } else {

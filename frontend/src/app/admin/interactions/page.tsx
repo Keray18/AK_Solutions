@@ -137,7 +137,7 @@ export default function AdminInteractionsPage() {
     if (confirm('Are you sure you want to delete this interaction rule?')) {
       try {
         await api.delete(`/interactions/${id}`);
-        fetchData(true);
+        fetchDataRef();
       } catch (err) {
         console.error(err);
       }

@@ -8,6 +8,7 @@ import {
   timestamp,
   pgEnum,
   index,
+  jsonb,
 } from 'drizzle-orm/pg-core';
 import { users } from './users.js';
 import { products } from './products.js';
@@ -65,4 +66,24 @@ export const routineSteps = pgTable('routine_steps', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
   index('routine_steps_routine_id_idx').on(table.routineId),
+]);
+
+// ---- Routine Analyses Table ----
+export const routineAnalyses = pgTable('routine_analyses', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  routineId: uuid('routine_id')
+    .notNull()
+    .references(() => routines.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  analysisVersion: integer('analysis_version').notNull(),
+  overallScore: integer('overall_score').notNull(),
+  confidence: varchar('confidence', { length: 50 }).notNull(),
+  breakdown: jsonb('breakdown').notNull(),
+  issues: jsonb('issues').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('routine_analyses_routine_id_idx').on(table.routineId),
+  index('routine_analyses_user_id_idx').on(table.userId),
 ]);
