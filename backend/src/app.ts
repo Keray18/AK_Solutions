@@ -46,7 +46,7 @@ import ingredientRoutes from './modules/ingredients/ingredients.routes.js';
 import { routineRoutes } from './modules/routines/routines.routes.js';
 import productRoutes from './modules/products/products.routes.js';
 import interactionRoutes from './modules/interactions/interactions.routes.js';
-
+import { recommendationRoutes } from './modules/recommendations/recommendations.routes.js';
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/skin-profile', skinProfileRoutes);
@@ -57,7 +57,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/ingredients', ingredientRoutes);
 app.use('/api/interactions', interactionRoutes);
 // app.use('/api/ai', aiRoutes);
-// app.use('/api/recommendations', recommendationRoutes);
+app.use('/api/recommendations', recommendationRoutes);
 // app.use('/api/saved-products', savedProductRoutes);
 // app.use('/api/affiliate', affiliateRoutes);
 // app.use('/api/analytics', analyticsRoutes);

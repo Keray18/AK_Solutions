@@ -10,7 +10,9 @@ const router = Router();
 
 // Public routes
 router.get('/', validate(schemas.productQuerySchema, 'query'), controller.getProducts);
+router.post('/compare', authenticate, controller.compareProducts);
 router.get('/:id', controller.getProductById);
+router.post('/:id/replacements', authenticate, controller.getReplacements);
 
 // Admin routes (require ADMIN role for mutation)
 router.post('/', authenticate, authorize(UserRole.ADMIN), validate(schemas.createProductSchema), controller.createProduct);

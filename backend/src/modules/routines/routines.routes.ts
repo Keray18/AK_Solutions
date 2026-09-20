@@ -17,4 +17,8 @@ router.delete('/:id', routinesController.deleteRoutine);
 router.get('/:id/analysis', routinesController.getLatestAnalysis);
 router.post('/:id/analyze', routinesController.analyzeRoutine);
 
+// Optimization routes
+router.post('/:id/optimize', routinesController.optimizeRoutine);
+router.post('/:id/apply-optimization', routinesController.applyOptimization);
+
 export { router as routineRoutes };

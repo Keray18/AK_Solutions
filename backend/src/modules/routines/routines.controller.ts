@@ -3,6 +3,7 @@ import { RoutinesService } from './routines.service.js';
 import { createRoutineSchema, updateRoutineSchema } from './routines.schemas.js';
 import { sendSuccess } from '../../shared/utils/apiResponse.js';
 import { RoutineAnalysisService } from './analysis.service.js';
+import { RoutineOptimizer } from './engines/optimizer.js';
 
 export const createRoutine = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -67,6 +68,60 @@ export const getLatestAnalysis = async (req: Request, res: Response, next: NextF
       return sendSuccess(res, { analysisUnavailable: true });
     }
     sendSuccess(res, analysis);
+  } catch (error) {
+    next(error);
+  }
+};
+
+import { ContextLoader } from './engines/contextLoader.js';
+import { db } from '../../config/database.js';
+import { routineSteps } from '../../db/schema/routines.js';
+import { eq } from 'drizzle-orm';
+
+export const optimizeRoutine = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const context = await ContextLoader.load(req.user!.id);
+    const analysis = await RoutineAnalysisService.getLatestAnalysis(req.user!.id, req.params.id as string);
+    if (!analysis) {
+      res.status(400).json({ status: 'error', message: 'Routine must be analyzed before optimization' });
+      return;
+    }
+
+    const optimization = RoutineOptimizer.optimize(context, analysis);
+    sendSuccess(res, optimization);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const applyOptimization = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { changes } = req.body;
+    const routineId = req.params.id as string;
+    
+    await db.transaction(async (tx) => {
+      for (const change of changes) {
+        if (change.action === 'REMOVE' && change.stepId) {
+           await tx.delete(routineSteps).where(eq(routineSteps.id, change.stepId));
+        } else if (change.action === 'ADD' && change.productId) {
+           await tx.insert(routineSteps).values({
+             routineId,
+             productId: change.productId,
+             dayTime: 'morning', // Needs proper client logic or inference in future
+             order: 99
+           });
+        } else if (change.action === 'REPLACE' && change.stepId && change.productId) {
+           await tx.update(routineSteps)
+             .set({ productId: change.productId })
+             .where(eq(routineSteps.id, change.stepId));
+        }
+      }
+    });
+
+    // Generate fresh analysis
+    const newAnalysis = await RoutineAnalysisService.analyzeRoutine(req.user!.id, routineId);
+    
+    sendSuccess(res, { success: true, appliedChanges: changes, newAnalysis });
   } catch (error) {
     next(error);
   }

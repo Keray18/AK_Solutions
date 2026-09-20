@@ -1,0 +1,12 @@
+export enum RecommendationType {
+  PRODUCT_REPLACEMENT = 'PRODUCT_REPLACEMENT',
+  PRODUCT_SUGGESTION = 'PRODUCT_SUGGESTION',
+  ROUTINE_OPTIMIZATION = 'ROUTINE_OPTIMIZATION',
+}
+
+export enum RecommendationAction {
+  ADD = 'ADD',
+  REMOVE = 'REMOVE',
+  KEEP = 'KEEP',
+  REPLACE = 'REPLACE',
+}

@@ -1,6 +1,8 @@
 import type { Request, Response, NextFunction } from 'express';
 import { productsService } from './products.service.js';
 import { sendSuccess } from '../../shared/utils/apiResponse.js';
+import { RecommendationService } from '../recommendations/recommendation.service.js';
+import { RecommendationType } from '../../shared/types/enums.js';
 
 export const createProduct = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -49,3 +51,58 @@ export const deleteProduct = async (req: Request, res: Response, next: NextFunct
     next(err);
   }
 };
+
+export const getReplacements = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Construct basic context from user using ContextLoader
+    const { ContextLoader } = await import('../routines/engines/contextLoader.js');
+    const fullContext = await ContextLoader.load(req.user!.id);
+    
+    const context = {
+      userId: req.user!.id,
+      primaryConcerns: fullContext.skinProfile?.primaryConcerns || [],
+      secondaryConcerns: fullContext.skinProfile?.secondaryConcerns || [],
+      skinType: fullContext.skinProfile?.skinType,
+      sensitivity: fullContext.skinProfile?.sensitivity,
+      userMonthlyBudget: fullContext.skinProfile?.budget ? Number(fullContext.skinProfile.budget) : undefined,
+      userBudgetFlexibility: fullContext.skinProfile?.budgetFlexibility,
+      existingProductIds: [],
+      ownedProductIds: [],
+      requestType: RecommendationType.PRODUCT_REPLACEMENT
+    };
+    
+    const decision = await RecommendationService.processReplacement(context, req.params.id as string);
+    sendSuccess(res, decision);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const compareProducts = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { productIds } = req.body;
+    
+    // Construct basic context from user using ContextLoader
+    const { ContextLoader } = await import('../routines/engines/contextLoader.js');
+    const fullContext = await ContextLoader.load(req.user!.id);
+    
+    const context = {
+      userId: req.user!.id,
+      primaryConcerns: fullContext.skinProfile?.primaryConcerns || [],
+      secondaryConcerns: fullContext.skinProfile?.secondaryConcerns || [],
+      skinType: fullContext.skinProfile?.skinType,
+      sensitivity: fullContext.skinProfile?.sensitivity,
+      userMonthlyBudget: fullContext.skinProfile?.budget ? Number(fullContext.skinProfile.budget) : undefined,
+      userBudgetFlexibility: fullContext.skinProfile?.budgetFlexibility,
+      existingProductIds: [],
+      ownedProductIds: [],
+      requestType: RecommendationType.PRODUCT_SUGGESTION
+    };
+
+    const decision = await RecommendationService.compareProducts(context, productIds);
+    sendSuccess(res, decision);
+  } catch (err) {
+    next(err);
+  }
+};
+
