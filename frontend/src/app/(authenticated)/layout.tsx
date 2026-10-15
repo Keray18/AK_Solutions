@@ -26,6 +26,9 @@ import {
   Person as PersonIcon,
   Science as ScienceIcon,
   EventNote as RoutineIcon,
+  ShoppingBag as ProductsIcon,
+  AutoAwesome as RecommendationsIcon,
+  Psychology as AiIcon,
 } from '@mui/icons-material';
 import { useAuthStore } from '@/stores/authStore';
 import api from '@/services/api';
@@ -35,9 +38,12 @@ const drawerWidth = 260;
 
 const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-  { text: 'My Routine', icon: <RoutineIcon />, path: '/onboarding/routine' },
+  { text: 'My Routines', icon: <RoutineIcon />, path: '/routines' },
   { text: 'Skin Profile', icon: <PersonIcon />, path: '/profile' },
-  { text: 'Ingredients Lab', icon: <ScienceIcon />, path: '/lab' },
+  { text: 'Products Catalog', icon: <ProductsIcon />, path: '/products' },
+  { text: 'Recommendations', icon: <RecommendationsIcon />, path: '/recommendations' },
+  { text: 'Ingredients Lab', icon: <ScienceIcon />, path: '/ingredients' },
+  { text: 'AI Assistant', icon: <AiIcon />, path: '/ai' },
 ];
 
 export default function AuthenticatedLayout({

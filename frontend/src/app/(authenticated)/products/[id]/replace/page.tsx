@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Typography, Box, Container, Paper, CircularProgress, Button, Grid } from '@mui/material';
 import { recommendationService } from '@/services/recommendation.service';
@@ -39,7 +39,7 @@ export default function ReplaceProductPage() {
           <Typography variant="h6" sx={{ mb: 3 }}>Why are you considering replacing this product?</Typography>
           <Grid container spacing={2}>
             {['TOO_EXPENSIVE', 'IRRITATION_CONCERN', 'UNAVAILABLE', 'WANT_SIMPLER_ROUTINE', 'FINISHED', 'JUST_EXPLORING'].map(r => (
-              <Grid item xs={12} sm={6} key={r}>
+              <Grid size={{ xs: 12, sm: 6 }} key={r}>
                 <Button 
                   fullWidth 
                   variant="outlined" 
@@ -77,7 +77,7 @@ export default function ReplaceProductPage() {
               <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Options</Typography>
               <Grid container spacing={3}>
                 {recommendation.items.map((item: any, idx: number) => (
-                  <Grid item xs={12} sm={6} key={idx}>
+                  <Grid size={{ xs: 12, sm: 6 }} key={idx}>
                     <Paper elevation={0} sx={{ p: 3, borderRadius: 4, border: '1px solid', borderColor: 'divider', height: '100%' }}>
                       <Typography variant="subtitle2" color="primary" sx={{ mb: 1, fontWeight: 700 }}>
                         {item.rank === 1 ? 'BEST FIT' : item.rank === 2 ? 'BUDGET OPTION' : 'ALTERNATIVE'}

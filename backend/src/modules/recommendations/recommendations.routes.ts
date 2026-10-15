@@ -69,4 +69,48 @@ router.get('/:id', requireAuth, async (req: Request, res: Response, next: NextFu
   }
 });
 
+import { RecommendationService } from './recommendation.service.js';
+import { ContextLoader } from '../routines/engines/contextLoader.js';
+import { RecommendationType } from '../../shared/types/enums.js';
+
+/**
+ * POST /api/recommendations/generate
+ * Generates personalized recommendations based on the user's profile and routines
+ */
+router.post('/generate', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.id;
+    const fullContext = await ContextLoader.load(userId);
+
+    const concerns = fullContext.skinProfile?.concerns || [];
+    const primaryConcerns = concerns
+      .filter(c => (c.priority || '').toString().toLowerCase() === 'primary')
+      .map(c => c.type.toString());
+    const secondaryConcerns = concerns
+      .filter(c => (c.priority || '').toString().toLowerCase() === 'secondary')
+      .map(c => c.type.toString());
+
+    const context = {
+      userId,
+      primaryConcerns,
+      secondaryConcerns,
+      skinType: fullContext.skinProfile?.skinType || undefined,
+      sensitivity: fullContext.skinProfile?.sensitivity || undefined,
+      existingProductIds: [],
+      ownedProductIds: [],
+      requestType: RecommendationType.PRODUCT_SUGGESTION
+    };
+
+    const targetCategory = req.body?.category;
+    const recommendation = await RecommendationService.processDiscovery(context, targetCategory);
+
+    res.status(201).json({
+      status: 'success',
+      data: recommendation
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export { router as recommendationRoutes };

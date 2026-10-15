@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Typography, Box, Container, Paper, CircularProgress, 
   Button, TextField, Alert, useTheme, useMediaQuery,
@@ -72,7 +72,7 @@ export default function CompareProductsPage() {
       {comparison && (
         <Box>
           <Alert severity="info" sx={{ mb: 4, borderRadius: 2 }}>
-            <Typography variant="subtitle1" fontWeight={700}>SkinAI Decision:</Typography>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>SkinAI Decision:</Typography>
             <Typography>{comparison.decision}</Typography>
           </Alert>
 
@@ -82,7 +82,7 @@ export default function CompareProductsPage() {
               {comparison.scores.map((scoreObj: any, index: number) => (
                 <Card key={index} variant="outlined" sx={{ borderRadius: 4 }}>
                   <CardContent>
-                    <Typography variant="h6" fontWeight={700} color="primary.main" gutterBottom>
+                    <Typography variant="h6" sx={{ fontWeight: 700 }} color="primary.main" gutterBottom>
                       Product {index + 1}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" noWrap sx={{ mb: 2 }}>

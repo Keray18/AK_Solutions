@@ -98,4 +98,12 @@ describe('Auth Routes (E2E)', () => {
     expect(newCookies![0]).toContain('skinai_refresh=');
     expect(newCookies![0]).not.toEqual(cookies[0]);
   });
+
+  it('GET /health should return 200 and healthy status', async () => {
+    const res = await request(app).get('/health');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.status).toBe('healthy');
+    expect(res.body.data.timestamp).toBeDefined();
+  });
 });

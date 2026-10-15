@@ -73,7 +73,7 @@ export default function RecommendationDetailPage() {
       
       <Grid container spacing={3}>
         {detail.items?.map((item: any, idx: number) => (
-          <Grid item xs={12} key={idx}>
+          <Grid size={{ xs: 12 }} key={idx}>
             <Paper 
               elevation={0} 
               sx={{ 

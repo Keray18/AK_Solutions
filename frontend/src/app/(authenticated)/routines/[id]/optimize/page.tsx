@@ -66,13 +66,13 @@ export default function OptimizeRoutinePage() {
       </Typography>
 
       <Grid container spacing={4} sx={{ mb: 6 }}>
-        <Grid item xs={6}>
+        <Grid size={{ xs: 6 }}>
           <Paper elevation={0} sx={{ p: 3, borderRadius: 4, border: '1px solid', borderColor: 'divider', textAlign: 'center', bgcolor: 'grey.50' }}>
             <Typography variant="overline" color="text.secondary">Current Score</Typography>
             <Typography variant="h3" sx={{ fontWeight: 700, mt: 1 }}>{optimization.currentScore}</Typography>
           </Paper>
         </Grid>
-        <Grid item xs={6}>
+        <Grid size={{ xs: 6 }}>
           <Paper elevation={0} sx={{ p: 3, borderRadius: 4, border: '1px solid', borderColor: 'primary.main', textAlign: 'center', bgcolor: 'primary.50' }}>
             <Typography variant="overline" color="primary">Projected Score</Typography>
             <Typography variant="h3" color="primary" sx={{ fontWeight: 700, mt: 1 }}>{optimization.projectedScore}</Typography>
@@ -90,7 +90,7 @@ export default function OptimizeRoutinePage() {
       ) : (
         <Grid container spacing={3}>
           {optimization.changes.map((change: any, idx: number) => (
-            <Grid item xs={12} key={idx}>
+            <Grid size={{ xs: 12 }} key={idx}>
               <Paper elevation={0} sx={{ p: 3, borderRadius: 4, borderLeft: '4px solid', borderColor: change.action === 'REMOVE' ? 'error.main' : 'primary.main', bgcolor: 'background.paper' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <Box>

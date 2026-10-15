@@ -58,14 +58,20 @@ export const getReplacements = async (req: Request, res: Response, next: NextFun
     const { ContextLoader } = await import('../routines/engines/contextLoader.js');
     const fullContext = await ContextLoader.load(req.user!.id);
     
+    const concerns = fullContext.skinProfile?.concerns || [];
+    const primaryConcerns = concerns
+      .filter(c => (c.priority || '').toString().toLowerCase() === 'primary')
+      .map(c => c.type.toString());
+    const secondaryConcerns = concerns
+      .filter(c => (c.priority || '').toString().toLowerCase() === 'secondary')
+      .map(c => c.type.toString());
+
     const context = {
       userId: req.user!.id,
-      primaryConcerns: fullContext.skinProfile?.primaryConcerns || [],
-      secondaryConcerns: fullContext.skinProfile?.secondaryConcerns || [],
-      skinType: fullContext.skinProfile?.skinType,
-      sensitivity: fullContext.skinProfile?.sensitivity,
-      userMonthlyBudget: fullContext.skinProfile?.budget ? Number(fullContext.skinProfile.budget) : undefined,
-      userBudgetFlexibility: fullContext.skinProfile?.budgetFlexibility,
+      primaryConcerns,
+      secondaryConcerns,
+      skinType: fullContext.skinProfile?.skinType || undefined,
+      sensitivity: fullContext.skinProfile?.sensitivity || undefined,
       existingProductIds: [],
       ownedProductIds: [],
       requestType: RecommendationType.PRODUCT_REPLACEMENT
@@ -86,14 +92,20 @@ export const compareProducts = async (req: Request, res: Response, next: NextFun
     const { ContextLoader } = await import('../routines/engines/contextLoader.js');
     const fullContext = await ContextLoader.load(req.user!.id);
     
+    const concerns = fullContext.skinProfile?.concerns || [];
+    const primaryConcerns = concerns
+      .filter(c => (c.priority || '').toString().toLowerCase() === 'primary')
+      .map(c => c.type.toString());
+    const secondaryConcerns = concerns
+      .filter(c => (c.priority || '').toString().toLowerCase() === 'secondary')
+      .map(c => c.type.toString());
+
     const context = {
       userId: req.user!.id,
-      primaryConcerns: fullContext.skinProfile?.primaryConcerns || [],
-      secondaryConcerns: fullContext.skinProfile?.secondaryConcerns || [],
-      skinType: fullContext.skinProfile?.skinType,
-      sensitivity: fullContext.skinProfile?.sensitivity,
-      userMonthlyBudget: fullContext.skinProfile?.budget ? Number(fullContext.skinProfile.budget) : undefined,
-      userBudgetFlexibility: fullContext.skinProfile?.budgetFlexibility,
+      primaryConcerns,
+      secondaryConcerns,
+      skinType: fullContext.skinProfile?.skinType || undefined,
+      sensitivity: fullContext.skinProfile?.sensitivity || undefined,
       existingProductIds: [],
       ownedProductIds: [],
       requestType: RecommendationType.PRODUCT_SUGGESTION

@@ -80,8 +80,8 @@ export default function HomePage() {
               <MuiLink component={Link} href="/ingredients" color="text.primary" sx={{ typography: 'body2', fontWeight: 500, textDecoration: 'none', '&:hover': { color: 'primary.main' } }}>
                 Ingredients
               </MuiLink>
-              <MuiLink component={Link} href="/articles" color="text.primary" sx={{ typography: 'body2', fontWeight: 500, textDecoration: 'none', '&:hover': { color: 'primary.main' } }}>
-                Learn
+              <MuiLink component={Link} href="/ai" color="text.primary" sx={{ typography: 'body2', fontWeight: 500, textDecoration: 'none', '&:hover': { color: 'primary.main' } }}>
+                AI Assistant
               </MuiLink>
             </Stack>
 

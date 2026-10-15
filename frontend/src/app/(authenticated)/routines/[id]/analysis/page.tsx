@@ -42,7 +42,31 @@ export default function RoutineAnalysisPage({ params }: { params: Promise<{ id: 
   };
 
   useEffect(() => {
-    fetchAnalysis();
+    let ignore = false;
+    async function load() {
+      try {
+        let data = await routineService.getAnalysis(unwrappedParams.id);
+        if (data?.analysisUnavailable) {
+          data = await routineService.analyzeRoutine(unwrappedParams.id);
+        }
+        if (!ignore) {
+          setAnalysis(data);
+          setIsStale(Boolean(data?.isStale));
+        }
+      } catch (err: any) {
+        if (!ignore) {
+          setError(err.response?.data?.error?.message || 'We could not analyze this routine right now. Please try again.');
+        }
+      } finally {
+        if (!ignore) {
+          setIsLoading(false);
+        }
+      }
+    }
+    load();
+    return () => {
+      ignore = true;
+    };
   }, [unwrappedParams.id]);
 
   if (isLoading) {
@@ -121,7 +145,7 @@ export default function RoutineAnalysisPage({ params }: { params: Promise<{ id: 
 
       <div className="mb-8">
         <h1 className="text-3xl font-serif text-gray-900 mb-2">Routine Analysis</h1>
-        <p className="text-gray-600">A detailed breakdown of your skincare routine's structure and compatibility.</p>
+        <p className="text-gray-600">A detailed breakdown of your skincare routine&apos;s structure and compatibility.</p>
         
         {isStale && (
           <div className="mt-6 bg-amber-50 text-amber-800 p-4 rounded-xl border border-amber-200 text-sm flex flex-col items-center">
@@ -201,7 +225,7 @@ export default function RoutineAnalysisPage({ params }: { params: Promise<{ id: 
             <section>
               <h3 className="text-lg font-serif text-gray-900 mb-4 flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 text-teal-600" />
-                What's Working
+                What&apos;s Working
               </h3>
               <div className="bg-teal-50/50 rounded-xl border border-teal-100 p-5">
                 <ul className="space-y-3">

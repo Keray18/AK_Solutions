@@ -6,13 +6,16 @@ import {
   EVIDENCE_SCORES,
 } from './constants.js';
 import { Confidence, BudgetFlexibility } from '../../shared/types/enums.js';
+import { CandidateCompatibility } from './candidateCompatibility.js';
+import { AnalysisContext } from '../routines/engines/types.js';
 
 export class RankingEngine {
   static scoreCandidate(
     product: any, // The candidate product
     productIngredients: any[], // Array of ingredient data for this product
     context: RecommendationContext,
-    interactions: any[] = [] // resolved interactions with routine
+    interactions: any[] = [], // resolved interactions with routine
+    analysisContext: AnalysisContext | null = null
   ): CandidateScore {
     let availableMaxPoints = 0;
     let earnedPoints = 0;
@@ -27,6 +30,7 @@ export class RankingEngine {
       evidence: 0,
       budgetFit: 0,
       simplicity: 0,
+      environmentFit: 0,
     };
 
     let missingDataCount = 0;
@@ -74,25 +78,44 @@ export class RankingEngine {
 
     // 3. Routine Compatibility (20 pts)
     availableMaxPoints += RECOMMENDATION_WEIGHTS.ROUTINE_COMPATIBILITY;
-    // For v1, if they have a routine, we give max and subtract for conflicts.
-    // If we have actual engine integration here we'd run the conflict detector.
-    // Since we are mocking the deterministic rule application for this score:
     let compatibilityScore = RECOMMENDATION_WEIGHTS.ROUTINE_COMPATIBILITY;
-    if (context.routineId) {
+
+    const hasRoutine = Boolean(
+      context.routineId || 
+      analysisContext?.morningRoutine || 
+      analysisContext?.eveningRoutine
+    );
+
+    if (hasRoutine && analysisContext) {
+      // Use Sprint 4 Conflict Detector via adapter
+      const compatibility = CandidateCompatibility.evaluate(
+        product,
+        productIngredients,
+        analysisContext,
+        interactions as any[]
+      );
+      
+      compatibilityScore = compatibility.compatibilityScore;
+      exclusions.push(...compatibility.exclusions);
+      penalties.push(...compatibility.penalties);
+    } else if (hasRoutine && !analysisContext && interactions && interactions.length > 0) {
       interactions.forEach(interaction => {
-        if (interaction.severity === 'HIGH' && interaction.interactionType === 'CONFLICT') {
-           exclusions.push('HIGH_CONFLICT');
-           compatibilityScore = 0;
-        } else if (interaction.severity === 'MEDIUM') {
-           compatibilityScore -= 5;
-           penalties.push('MODERATE_INTERACTION');
-        } else if (interaction.interactionType === 'REDUNDANCY') {
-           compatibilityScore -= 3;
-           penalties.push('PARTIAL_REDUNDANCY');
+        const sev = (interaction.severity || '').toString().toLowerCase();
+        const typ = (interaction.interactionType || '').toString().toLowerCase();
+        if (sev === 'high' && typ === 'conflict') {
+          exclusions.push('HIGH_CONFLICT');
+          compatibilityScore = 0;
+        } else if (sev === 'medium') {
+          compatibilityScore -= 5;
+          penalties.push('MODERATE_INTERACTION');
+        } else if (typ === 'redundancy') {
+          compatibilityScore -= 3;
+          penalties.push('PARTIAL_REDUNDANCY');
         }
       });
       compatibilityScore = Math.max(0, compatibilityScore);
     }
+    
     breakdown.routineCompatibility = compatibilityScore;
     earnedPoints += breakdown.routineCompatibility;
 
@@ -177,11 +200,11 @@ export class RankingEngine {
     // Calculate Confidence
     let confidence = Confidence.HIGH;
     if (availableMaxPoints === 0) {
-      confidence = Confidence.LIMITED;
+      confidence = Confidence.LOW;
     } else if (missingDataCount >= 3) {
-      confidence = Confidence.LIMITED;
+      confidence = Confidence.LOW;
     } else if (missingDataCount >= 1) {
-      confidence = Confidence.MODERATE;
+      confidence = Confidence.MEDIUM;
     }
 
     return {

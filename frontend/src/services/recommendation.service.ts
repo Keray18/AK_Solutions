@@ -11,6 +11,11 @@ export const recommendationService = {
     return response.data;
   },
 
+  generateRecommendations: async (category?: string) => {
+    const response = await api.post('/recommendations/generate', { category });
+    return response.data;
+  },
+
   getReplacements: async (productId: string) => {
     const response = await api.post(`/products/${productId}/replacements`);
     return response.data;

@@ -96,9 +96,12 @@ export const optimizeRoutine = async (req: Request, res: Response, next: NextFun
 
 export const applyOptimization = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { changes } = req.body;
+    const changes = req.body?.changes ?? [];
     const routineId = req.params.id as string;
     
+    // Enforce ownership
+    await RoutinesService.getRoutineById(req.user!.id, routineId);
+
     await db.transaction(async (tx) => {
       for (const change of changes) {
         if (change.action === 'REMOVE' && change.stepId) {
@@ -107,8 +110,8 @@ export const applyOptimization = async (req: Request, res: Response, next: NextF
            await tx.insert(routineSteps).values({
              routineId,
              productId: change.productId,
-             dayTime: 'morning', // Needs proper client logic or inference in future
-             order: 99
+             category: change.category || 'OTHER',
+             stepOrder: change.stepOrder || 99
            });
         } else if (change.action === 'REPLACE' && change.stepId && change.productId) {
            await tx.update(routineSteps)

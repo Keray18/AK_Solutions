@@ -5,6 +5,74 @@ import { useRouter } from 'next/navigation';
 import { routineService } from '@/services/routine.service';
 import { Sun, Moon, ArrowRight, Loader2 } from 'lucide-react';
 
+interface RoutineCardProps {
+  routine: any;
+  type: string;
+  title: string;
+  icon: any;
+  onAdd: () => void;
+  onAnalyze: (id: string) => void;
+  onView: (id: string) => void;
+}
+
+function RoutineCard({ routine, title, icon: Icon, onAdd, onAnalyze, onView }: RoutineCardProps) {
+  if (!routine) {
+    return (
+      <div className="rounded-xl border border-dashed border-gray-300 p-6 flex flex-col items-center justify-center text-gray-500 bg-gray-50/50">
+        <Icon className="h-8 w-8 mb-3 opacity-50" />
+        <h3 className="text-lg font-medium mb-1">No {title}</h3>
+        <p className="text-sm mb-4">You haven&apos;t added a {title.toLowerCase()} yet.</p>
+        <button 
+          className="text-teal-600 text-sm font-medium hover:underline"
+          onClick={onAdd}
+        >
+          Add Routine
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-gray-200 p-6 bg-white shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-teal-50 text-teal-600 rounded-lg">
+            <Icon className="h-5 w-5" />
+          </div>
+          <h3 className="text-lg font-serif">{title}</h3>
+        </div>
+        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+          {routine.steps.length} steps
+        </span>
+      </div>
+
+      <div className="space-y-4 mb-6">
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-500">Last updated</span>
+          <span className="text-gray-900">{new Date(routine.updatedAt).toLocaleDateString()}</span>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <button 
+          onClick={() => onAnalyze(routine.id)}
+          className="w-full flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white py-2.5 rounded-lg text-sm font-medium transition-colors"
+        >
+          Analyze Routine
+          <ArrowRight className="h-4 w-4" />
+        </button>
+        
+        <button 
+          onClick={() => onView(routine.id)}
+          className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 py-2.5 rounded-lg text-sm font-medium transition-colors"
+        >
+          View Details
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function RoutinesDashboardPage() {
   const router = useRouter();
   const [routines, setRoutines] = useState<any[]>([]);
@@ -35,64 +103,6 @@ export default function RoutinesDashboardPage() {
   const morning = routines.find(r => r.routineType === 'morning');
   const evening = routines.find(r => r.routineType === 'evening');
 
-  const RoutineCard = ({ routine, type, title, icon: Icon }: any) => {
-    if (!routine) {
-      return (
-        <div className="rounded-xl border border-dashed border-gray-300 p-6 flex flex-col items-center justify-center text-gray-500 bg-gray-50/50">
-          <Icon className="h-8 w-8 mb-3 opacity-50" />
-          <h3 className="text-lg font-medium mb-1">No {title}</h3>
-          <p className="text-sm mb-4">You haven't added a {title.toLowerCase()} yet.</p>
-          <button 
-            className="text-teal-600 text-sm font-medium hover:underline"
-            onClick={() => router.push('/onboarding/routine')}
-          >
-            Add Routine
-          </button>
-        </div>
-      );
-    }
-
-    return (
-      <div className="rounded-xl border border-gray-200 p-6 bg-white shadow-sm hover:shadow-md transition-shadow">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-teal-50 text-teal-600 rounded-lg">
-              <Icon className="h-5 w-5" />
-            </div>
-            <h3 className="text-lg font-serif">{title}</h3>
-          </div>
-          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-            {routine.steps.length} steps
-          </span>
-        </div>
-
-        <div className="space-y-4 mb-6">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Last updated</span>
-            <span className="text-gray-900">{new Date(routine.updatedAt).toLocaleDateString()}</span>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <button 
-            onClick={() => router.push(`/routines/${routine.id}/analysis`)}
-            className="w-full flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white py-2.5 rounded-lg text-sm font-medium transition-colors"
-          >
-            Analyze Routine
-            <ArrowRight className="h-4 w-4" />
-          </button>
-          
-          <button 
-            onClick={() => router.push(`/routines/${routine.id}`)}
-            className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 py-2.5 rounded-lg text-sm font-medium transition-colors"
-          >
-            View Details
-          </button>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6">
       <div className="mb-8">
@@ -101,8 +111,24 @@ export default function RoutinesDashboardPage() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        <RoutineCard routine={morning} type="morning" title="Morning Routine" icon={Sun} />
-        <RoutineCard routine={evening} type="evening" title="Evening Routine" icon={Moon} />
+        <RoutineCard 
+          routine={morning} 
+          type="morning" 
+          title="Morning Routine" 
+          icon={Sun} 
+          onAdd={() => router.push('/onboarding/routine')}
+          onAnalyze={(id) => router.push(`/routines/${id}/analysis`)}
+          onView={(id) => router.push(`/routines/${id}`)}
+        />
+        <RoutineCard 
+          routine={evening} 
+          type="evening" 
+          title="Evening Routine" 
+          icon={Moon} 
+          onAdd={() => router.push('/onboarding/routine')}
+          onAnalyze={(id) => router.push(`/routines/${id}/analysis`)}
+          onView={(id) => router.push(`/routines/${id}`)}
+        />
       </div>
     </div>
   );

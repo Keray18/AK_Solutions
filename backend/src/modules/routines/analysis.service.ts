@@ -7,7 +7,7 @@ import { db } from '../../config/database.js';
 import { routineAnalyses, routines } from '../../db/schema/routines.js';
 import { eq, and, desc } from 'drizzle-orm';
 import { RoutineHealthScore } from './engines/types.js';
-
+import { NotFoundError } from '../../shared/types/errors.js';
 import { ROUTINE_ANALYSIS_VERSION } from './routineAnalysis.constants.js';
 
 export class RoutineAnalysisService {
@@ -15,7 +15,7 @@ export class RoutineAnalysisService {
     // 1. Verify routine ownership and existence
     const [routine] = await db.select().from(routines).where(and(eq(routines.id, routineId), eq(routines.userId, userId)));
     if (!routine) {
-      throw new Error('Routine not found or belongs to another user.');
+      throw new NotFoundError('Routine not found or belongs to another user.');
     }
 
     // 2. Load complete analysis context for the user (loads both AM and PM to check cross-routine interactions)
@@ -59,7 +59,7 @@ export class RoutineAnalysisService {
   static async getLatestAnalysis(userId: string, routineId: string) {
     const [routine] = await db.select().from(routines).where(and(eq(routines.id, routineId), eq(routines.userId, userId)));
     if (!routine) {
-      throw new Error('Routine not found or belongs to another user.');
+      throw new NotFoundError('Routine not found or belongs to another user.');
     }
 
     const [analysis] = await db

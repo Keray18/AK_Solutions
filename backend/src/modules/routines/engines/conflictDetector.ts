@@ -63,18 +63,20 @@ export class ConflictDetector {
       const aProductNamesEvening = aProductsEvening.map(p => p.productName || 'Unknown Product');
       const bProductNamesEvening = bProductsEvening.map(p => p.productName || 'Unknown Product');
 
-      let conflictType: 'conflict' | 'caution' | 'synergy' | 'redundancy' = interactionType as any;
+      const normType = (interactionType || '').toString().toLowerCase();
+      const normSeverity = (severity || '').toString().toLowerCase();
+      let conflictType: 'conflict' | 'caution' | 'synergy' | 'redundancy' = normType as any;
 
       // Check "Same Routine" (e.g., both used in AM, or both used in PM)
       if (!sameRoutineOk) {
         if (aInMorning && bInMorning) {
           if (!schedulesDoNotOverlap(aProductsMorning, bProductsMorning)) {
-            this.addIssue(issues, rule, 'morning', [...aProductNamesMorning, ...bProductNamesMorning], conflictType, severity as any, explanation, recommendation);
+            this.addIssue(issues, rule, 'morning', [...aProductNamesMorning, ...bProductNamesMorning], conflictType, normSeverity as any, explanation, recommendation);
           }
         }
         if (aInEvening && bInEvening) {
           if (!schedulesDoNotOverlap(aProductsEvening, bProductsEvening)) {
-            this.addIssue(issues, rule, 'evening', [...aProductNamesEvening, ...bProductNamesEvening], conflictType, severity as any, explanation, recommendation);
+            this.addIssue(issues, rule, 'evening', [...aProductNamesEvening, ...bProductNamesEvening], conflictType, normSeverity as any, explanation, recommendation);
           }
         }
       }
@@ -90,7 +92,7 @@ export class ConflictDetector {
              const allBProducts = [...bProductsMorning, ...bProductsEvening];
              if (!schedulesDoNotOverlap(allAProducts, allBProducts)) {
                const allProductNames = Array.from(new Set([...aProductNamesMorning, ...aProductNamesEvening, ...bProductNamesMorning, ...bProductNamesEvening]));
-               this.addIssue(issues, rule, 'same_day', allProductNames, conflictType, severity as any, explanation, recommendation);
+               this.addIssue(issues, rule, 'same_day', allProductNames, conflictType, normSeverity as any, explanation, recommendation);
              }
           }
         }
@@ -99,10 +101,10 @@ export class ConflictDetector {
       // Synergies and Cautions where Same Routine is OK
       if (sameRoutineOk && sameDayOk && (conflictType === 'synergy' || conflictType === 'caution' || conflictType === 'redundancy')) {
         if (aInMorning && bInMorning && !schedulesDoNotOverlap(aProductsMorning, bProductsMorning)) {
-          this.addIssue(issues, rule, 'morning', [...aProductNamesMorning, ...bProductNamesMorning], conflictType, severity as any, explanation, recommendation);
+          this.addIssue(issues, rule, 'morning', [...aProductNamesMorning, ...bProductNamesMorning], conflictType, normSeverity as any, explanation, recommendation);
         }
         if (aInEvening && bInEvening && !schedulesDoNotOverlap(aProductsEvening, bProductsEvening)) {
-           this.addIssue(issues, rule, 'evening', [...aProductNamesEvening, ...bProductNamesEvening], conflictType, severity as any, explanation, recommendation);
+           this.addIssue(issues, rule, 'evening', [...aProductNamesEvening, ...bProductNamesEvening], conflictType, normSeverity as any, explanation, recommendation);
         }
       }
     }
