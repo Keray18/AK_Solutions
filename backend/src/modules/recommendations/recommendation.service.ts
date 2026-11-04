@@ -6,7 +6,7 @@ import { RankingEngine } from './rankingEngine.js';
 import { DecisionPolicy } from './decisionPolicy.js';
 import { NeedAssessment } from './needAssessment.js';
 import { productIngredients, ingredientInteractions } from '../../db/schema/ingredients.js';
-import { products } from '../../db/schema/products.js';
+import { products, brands } from '../../db/schema/products.js';
 import { eq, or, and, inArray } from 'drizzle-orm';
 import { ContextLoader } from '../routines/engines/contextLoader.js';
 import { RecommendationType, RecommendationAction } from '../../shared/types/enums.js';
@@ -81,6 +81,9 @@ export class RecommendationService {
     // Abort early if the need is NO_CHANGE_NEEDED
     // However, if the user explicitly requested it, we still evaluate candidates, but the decision policy handles it.
     if (need === NeedDecision.NO_CHANGE_NEEDED) {
+        const currentBrand = currentProduct?.brandId
+          ? (await db.select().from(brands).where(eq(brands.id, currentProduct.brandId)).limit(1))[0]
+          : null;
         return {
           type: RecommendationType.PRODUCT_REPLACEMENT,
           decision: RecommendationAction.KEEP,
@@ -90,6 +93,11 @@ export class RecommendationService {
           overallScore: currentScore.totalScore,
           items: [{
             productId: currentScore.productId,
+            productName: currentProduct?.name || null,
+            brandName: currentBrand?.name || null,
+            price: currentProduct?.price || null,
+            currency: currentProduct?.currency || 'INR',
+            category: currentProduct?.category || null,
             action: RecommendationAction.KEEP,
             reason: 'Existing product',
             score: currentScore.totalScore
@@ -121,7 +129,27 @@ export class RecommendationService {
       });
     }
 
-    return finalDecision;
+    // Enrich items with genuine product names, brands, prices, and categories
+    const enrichedItems = await Promise.all(
+      finalDecision.items.map(async (item) => {
+        const prod = (await db.select().from(products).where(eq(products.id, item.productId)).limit(1))[0];
+        let brandName: string | null = null;
+        if (prod?.brandId) {
+          const brandRow = (await db.select().from(brands).where(eq(brands.id, prod.brandId)).limit(1))[0];
+          brandName = brandRow?.name || null;
+        }
+        return {
+          ...item,
+          productName: prod?.name || null,
+          brandName,
+          price: prod?.price || null,
+          currency: prod?.currency || 'INR',
+          category: prod?.category || null,
+        };
+      })
+    );
+
+    return { ...finalDecision, items: enrichedItems };
   }
 
   static async compareProducts(
@@ -266,9 +294,29 @@ export class RecommendationService {
       });
     }
 
+    const productMap = new Map(baseCandidates.map(p => [p.id, p]));
+    const enrichedItems = finalDecision.items.map(item => {
+      const p = productMap.get(item.productId);
+      return {
+        ...item,
+        product: p ? {
+          id: p.id,
+          name: p.name,
+          category: p.category,
+          price: p.price,
+          currency: p.currency,
+          description: p.description,
+          imageUrl: p.imageUrl,
+          skinTypeSuitability: p.skinTypeSuitability,
+          concernSuitability: p.concernSuitability,
+        } : null,
+      };
+    });
+
     return {
       id: reco?.id,
       ...finalDecision,
+      items: enrichedItems,
     };
   }
 }

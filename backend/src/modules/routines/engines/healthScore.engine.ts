@@ -18,6 +18,37 @@ export class HealthScoreEngine {
     const strengths: string[] = [];
     const confidenceReasons: string[] = [];
 
+    const totalSteps = (context.morningRoutine?.steps.length || 0) + (context.eveningRoutine?.steps.length || 0);
+
+    // If totalSteps is 0 and no issues are detected, do not fabricate a score (e.g. 70/100). Return an honest empty state.
+    if (totalSteps === 0 && issues.length === 0) {
+      return {
+        overallScore: 0,
+        label: 'Not available',
+        confidence: 'Limited',
+        confidenceReasons: ['No products have been added to your routines yet. Add products to generate a health score.'],
+        breakdown: {
+          compatibility: { score: 0, max: ROUTINE_SCORE_WEIGHTS.compatibility, reasons: ['No products to evaluate compatibility.'] },
+          structure: { score: 0, max: ROUTINE_SCORE_WEIGHTS.structure, reasons: ['No routine steps defined.'] },
+          concernCoverage: { score: 0, max: ROUTINE_SCORE_WEIGHTS.concernCoverage, reasons: ['No products addressing concerns.'] },
+          simplicity: { score: 0, max: ROUTINE_SCORE_WEIGHTS.simplicity, reasons: ['No products to assess routine simplicity.'] },
+          usage: { score: 0, max: ROUTINE_SCORE_WEIGHTS.usage, reasons: ['No products to assess application order.'] },
+        },
+        issues: [
+          {
+            id: 'empty_routine',
+            type: 'missing_data',
+            severity: 'info',
+            title: 'No Products in Routine',
+            description: 'This routine currently has no products. Add products to check for ingredient compatibility, routine structure, and conflict detection.',
+            productsInvolved: [],
+            recommendation: 'Add cleansers, moisturizers, or treatments to build your routine.'
+          }
+        ],
+        strengths: []
+      };
+    }
+
     // --- 1. Compatibility ---
     const compatibilityIssues = issues.filter(i => i.type === 'conflict' || i.type === 'caution');
     if (compatibilityIssues.length === 0) {
@@ -55,7 +86,7 @@ export class HealthScoreEngine {
       // Note: We deliberately do NOT penalize a lack of AM cleanser to support minimalist routines.
     } else {
       structureScore -= PENALTIES.noMorningRoutine;
-      structureReasons.push('⚠ No morning routine defined.');
+      structureReasons.push('⚠ Morning routine not yet configured.');
     }
 
     if (hasEvening) {
@@ -76,7 +107,7 @@ export class HealthScoreEngine {
       }
     } else {
       structureScore -= PENALTIES.noEveningRoutine;
-      structureReasons.push('⚠ No evening routine defined.');
+      structureReasons.push('⚠ Evening routine not yet configured.');
     }
     structureScore = Math.max(0, structureScore);
 
@@ -157,7 +188,6 @@ export class HealthScoreEngine {
     }
     
     // Penalize extreme length
-    const totalSteps = (context.morningRoutine?.steps.length || 0) + (context.eveningRoutine?.steps.length || 0);
     if (totalSteps > THRESHOLDS.extremeLengthSteps) {
       simplicityScore -= PENALTIES.extremeLength;
       simplicityReasons.push('⚠ Routine is very long, which increases risk of irritation.');
@@ -190,20 +220,15 @@ export class HealthScoreEngine {
     const missingDataIssues = issues.filter(i => i.type === 'missing_data');
     let confidence: 'High' | 'Moderate' | 'Limited' = 'High';
     
-    if (totalSteps === 0) {
+    const missingRatio = missingDataIssues.length / totalSteps;
+    if (missingRatio > 0.5) {
       confidence = 'Limited';
-      confidenceReasons.push('No routine has been added yet.');
+      confidenceReasons.push('Most products in this routine have missing ingredient data.');
+    } else if (missingRatio > 0) {
+      confidence = 'Moderate';
+      confidenceReasons.push(`${missingDataIssues.length} product(s) do not have verified ingredient lists.`);
     } else {
-      const missingRatio = missingDataIssues.length / totalSteps;
-      if (missingRatio > 0.5) {
-        confidence = 'Limited';
-        confidenceReasons.push('Most products in this routine have missing ingredient data.');
-      } else if (missingRatio > 0) {
-        confidence = 'Moderate';
-        confidenceReasons.push(`${missingDataIssues.length} product(s) do not have verified ingredient lists.`);
-      } else {
-        confidenceReasons.push('All products have complete ingredient profiles.');
-      }
+      confidenceReasons.push('All products have complete ingredient profiles.');
     }
 
     return {

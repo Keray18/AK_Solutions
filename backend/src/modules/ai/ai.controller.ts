@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AIService } from './ai.service.js';
+import { PersonalContextService } from './personalContext.service.js';
 import { sendSuccess } from '../../shared/utils/apiResponse.js';
 
 export const askQuestion = async (req: Request, res: Response, next: NextFunction) => {
@@ -68,6 +69,95 @@ export const getConversationMessages = async (req: Request, res: Response, next:
   }
 };
 
+export const deleteConversation = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.id;
+    const conversationId = req.params.id as string;
+    const result = await AIService.deleteConversation(userId, conversationId);
+    sendSuccess(res, result);
+  } catch (err: any) {
+    if (err.statusCode === 403) {
+      res.status(403).json({ status: 'error', message: 'Forbidden' });
+      return;
+    }
+    if (err.message && err.message.includes('not found')) {
+      res.status(404).json({ status: 'error', message: err.message });
+      return;
+    }
+    next(err);
+  }
+};
+
+export const getPersonalContext = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.id;
+    const context = await PersonalContextService.getPersonalContext(userId);
+    sendSuccess(res, context);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getHealthContext = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.id;
+    const health = await AIService.getHealthContext(userId);
+    sendSuccess(res, health);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateHealthContext = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.id;
+    const updated = await AIService.updateHealthContext(userId, req.body);
+    sendSuccess(res, updated);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const clearHealthContext = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.id;
+    const result = await AIService.clearHealthContext(userId);
+    sendSuccess(res, result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getUserMemory = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.id;
+    const memory = await AIService.getUserMemory(userId);
+    sendSuccess(res, memory);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateUserMemory = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.id;
+    const memory = await AIService.updateUserMemory(userId, req.body);
+    sendSuccess(res, memory);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const clearUserMemory = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.id;
+    const result = await AIService.clearUserMemory(userId);
+    sendSuccess(res, result);
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const retrieveKnowledge = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const query = (req.query.q as string) || '';
@@ -81,3 +171,4 @@ export const retrieveKnowledge = async (req: Request, res: Response, next: NextF
     next(err);
   }
 };
+

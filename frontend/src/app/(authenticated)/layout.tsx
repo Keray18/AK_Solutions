@@ -267,7 +267,10 @@ export default function AuthenticatedLayout({
         sx={{
           flexGrow: 1,
           p: { xs: 2, sm: 3 },
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          width: { xs: '100%', sm: `calc(100% - ${drawerWidth}px)` },
+          maxWidth: '100%',
+          overflowX: 'hidden',
+          boxSizing: 'border-box',
           bgcolor: '#F9FAFB', // tailwind gray-50
           minHeight: '100vh',
         }}

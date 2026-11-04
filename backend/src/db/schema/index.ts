@@ -54,6 +54,8 @@ export {
 export {
   aiConversations,
   aiMessages,
+  userHealthContexts,
+  userMemories,
   conversationTypeEnum,
   messageRoleEnum,
 } from './ai.js';

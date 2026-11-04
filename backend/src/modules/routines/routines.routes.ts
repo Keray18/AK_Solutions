@@ -12,6 +12,8 @@ router.get('/', routinesController.getUserRoutines);
 router.get('/:id', routinesController.getRoutineById);
 router.patch('/:id', routinesController.updateRoutine);
 router.delete('/:id', routinesController.deleteRoutine);
+router.post('/:id/steps', routinesController.addRoutineStep);
+router.delete('/:id/steps/:stepId', routinesController.deleteRoutineStep);
 
 // Analysis routes
 router.get('/:id/analysis', routinesController.getLatestAnalysis);

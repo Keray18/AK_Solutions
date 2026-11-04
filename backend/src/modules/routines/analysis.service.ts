@@ -18,8 +18,8 @@ export class RoutineAnalysisService {
       throw new NotFoundError('Routine not found or belongs to another user.');
     }
 
-    // 2. Load complete analysis context for the user (loads both AM and PM to check cross-routine interactions)
-    const context = await ContextLoader.load(userId);
+    // 2. Load complete analysis context for the user (prioritizing the requested routine)
+    const context = await ContextLoader.load(userId, routineId);
 
     // 3. Run Deterministic Analyzers
     const conflictIssues = ConflictDetector.analyze(context);

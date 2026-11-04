@@ -2,7 +2,9 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { authenticate as requireAuth } from '../../middleware/authenticate.js';
 import { db } from '../../config/database.js';
 import { recommendations, recommendationItems } from '../../db/schema/recommendations.js';
-import { eq, desc } from 'drizzle-orm';
+import { products, brands } from '../../db/schema/products.js';
+import { ingredients, productIngredients } from '../../db/schema/ingredients.js';
+import { eq, desc, inArray } from 'drizzle-orm';
 
 const router = Router();
 
@@ -53,9 +55,66 @@ router.get('/:id', requireAuth, async (req: Request, res: Response, next: NextFu
       return;
     }
 
-    const items = await db.select()
+    const rawItems = await db
+      .select({
+        item: recommendationItems,
+        product: products,
+        brand: brands,
+      })
       .from(recommendationItems)
-      .where(eq(recommendationItems.recommendationId, id as string));
+      .leftJoin(products, eq(recommendationItems.productId, products.id))
+      .leftJoin(brands, eq(products.brandId, brands.id))
+      .where(eq(recommendationItems.recommendationId, id as string))
+      .orderBy(recommendationItems.rank);
+
+    const productIds = rawItems.map(r => r.product?.id).filter(Boolean) as string[];
+    const ingredientMap = new Map<string, any[]>();
+    if (productIds.length > 0) {
+      const pIngredients = await db
+        .select({
+          productId: productIngredients.productId,
+          inciName: ingredients.inciName,
+          commonName: ingredients.commonName,
+          category: ingredients.category,
+          isKey: productIngredients.isKeyIngredient,
+        })
+        .from(productIngredients)
+        .innerJoin(ingredients, eq(productIngredients.ingredientId, ingredients.id))
+        .where(inArray(productIngredients.productId, productIds))
+        .orderBy(productIngredients.position);
+
+      for (const pi of pIngredients) {
+        if (!ingredientMap.has(pi.productId)) {
+          ingredientMap.set(pi.productId, []);
+        }
+        ingredientMap.get(pi.productId)!.push(pi);
+      }
+    }
+
+    const items = rawItems.map(r => ({
+      ...r.item,
+      product: r.product ? {
+        id: r.product.id,
+        name: r.product.name,
+        slug: r.product.slug,
+        category: r.product.category,
+        description: r.product.description,
+        price: r.product.price,
+        currency: r.product.currency,
+        size: r.product.size,
+        imageUrl: r.product.imageUrl,
+        skinTypeSuitability: r.product.skinTypeSuitability,
+        concernSuitability: r.product.concernSuitability,
+        hasFragrance: r.product.hasFragrance,
+        brand: r.brand ? {
+          id: r.brand.id,
+          name: r.brand.name,
+          slug: r.brand.slug,
+          website: r.brand.website,
+        } : null,
+        ingredients: ingredientMap.get(r.product.id) || [],
+      } : null,
+    }));
 
     res.json({
       status: 'success',

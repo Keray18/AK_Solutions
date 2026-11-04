@@ -5,7 +5,7 @@ import { app } from '../../app.js';
 import { db } from '../../config/database.js';
 import { routines } from '../../db/schema/routines.js';
 import { users } from '../../db/schema/users.js';
-import { eq } from 'drizzle-orm';
+import { eq, or } from 'drizzle-orm';
 import { tokenService } from '../auth/token.service.js';
 import { UserRole, ProductCategory } from '../../shared/types/enums.js';
 
@@ -13,9 +13,14 @@ describe('Routines API', () => {
   let tokenA: string;
   let tokenB: string;
   let userAId: string;
+  let userBId: string;
   let routineIdA: string;
 
   beforeAll(async () => {
+    // Clean up any stale records from previous aborted runs
+    await db.delete(users).where(eq(users.email, 'routine-user-A@example.com'));
+    await db.delete(users).where(eq(users.email, 'routine-user-B@example.com'));
+
     // Create users
     const [userA] = await db.insert(users).values({
       email: 'routine-user-A@example.com',
@@ -32,6 +37,7 @@ describe('Routines API', () => {
     }).returning();
     
     userAId = userA.id;
+    userBId = userB.id;
     
     const tokensA = tokenService.generateAccessToken({ id: userA.id, role: userA.role as UserRole, email: userA.email });
     tokenA = tokensA;
@@ -41,7 +47,9 @@ describe('Routines API', () => {
   });
 
   afterAll(async () => {
-    await db.delete(routines);
+    if (userAId && userBId) {
+      await db.delete(routines).where(or(eq(routines.userId, userAId), eq(routines.userId, userBId)));
+    }
     await db.delete(users).where(eq(users.email, 'routine-user-A@example.com'));
     await db.delete(users).where(eq(users.email, 'routine-user-B@example.com'));
   });

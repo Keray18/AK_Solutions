@@ -20,6 +20,9 @@ export interface RecommendationContext {
   existingProductIds: string[];
   ownedProductIds: string[];
   routineIngredientIds?: string[];
+  knownAllergies?: string[];
+  confirmedSensitivities?: string[];
+  avoidedIngredients?: string[];
   candidateCategory?: string;
   requestType: RecommendationType;
 }

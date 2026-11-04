@@ -4,6 +4,7 @@ import {
   varchar,
   text,
   integer,
+  boolean,
   timestamp,
   jsonb,
   pgEnum,
@@ -93,9 +94,53 @@ export const aiMessages = pgTable('ai_messages', {
     retrievedChunks?: number;
     safetyTriggered?: boolean;
     processingTimeMs?: number;
+    intent?: string;
+    [key: string]: any;
   }>(),
   tokenCount: integer('token_count'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
   index('ai_messages_conversation_id_idx').on(table.conversationId),
 ]);
+
+// ---- User Health Context Table (Consent-Based) ----
+export const userHealthContexts = pgTable('user_health_contexts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  hasConsent: boolean('has_consent').notNull().default(false),
+  consentDate: timestamp('consent_date', { withTimezone: true }),
+  allergies: jsonb('allergies').$type<string[]>().default([]),
+  skinConditions: jsonb('skin_conditions').$type<string[]>().default([]),
+  medications: jsonb('medications').$type<string[]>().default([]),
+  previousReactions: jsonb('previous_reactions').$type<string[]>().default([]),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('user_health_contexts_user_id_idx').on(table.userId),
+]);
+
+// ---- User Long-Term Conversational AI Memories Table ----
+export const userMemories = pgTable('user_memories', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  statedPreferences: jsonb('stated_preferences').$type<Record<string, any>>().default({}),
+  confirmedSensitivities: jsonb('confirmed_sensitivities').$type<string[]>().default([]),
+  triedProducts: jsonb('tried_products').$type<string[]>().default([]),
+  importantAdviceGiven: jsonb('important_advice_given').$type<string[]>().default([]),
+  acceptedRecommendations: jsonb('accepted_recommendations').$type<string[]>().default([]),
+  rejectedRecommendations: jsonb('rejected_recommendations').$type<string[]>().default([]),
+  unresolvedQuestions: jsonb('unresolved_questions').$type<string[]>().default([]),
+  summary: text('summary'),
+  lastUpdated: timestamp('last_updated', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('user_memories_user_id_idx').on(table.userId),
+]);
+
+

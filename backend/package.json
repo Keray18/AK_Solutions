@@ -14,6 +14,7 @@
     "db:drop": "drizzle-kit drop",
     "lint": "tsc --noEmit",
     "seed": "tsx src/scripts/seedKnowledge.ts",
+    "seed:demo": "tsx src/scripts/seedDemo.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
@@ -27,6 +28,7 @@
   "license": "UNLICENSED",
   "type": "module",
   "dependencies": {
+    "@google/genai": "^2.30.0",
     "bcryptjs": "^3.0.3",
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",

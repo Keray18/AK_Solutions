@@ -166,24 +166,46 @@ export default function RoutineAnalysisPage({ params }: { params: Promise<{ id: 
       <div className="bg-white rounded-2xl border border-gray-200 p-8 mb-8 shadow-sm text-center">
         <div className="text-sm font-medium text-gray-500 uppercase tracking-widest mb-4">Routine Health Score</div>
         <div className="flex items-center justify-center gap-4 mb-2">
-          <div className={`text-6xl font-light font-serif ${getScoreColor(overallScore)}`}>
-            {overallScore}<span className="text-3xl text-gray-300">/100</span>
+          {overallScore > 0 ? (
+            <div className={`text-6xl font-light font-serif ${getScoreColor(overallScore)}`}>
+              {overallScore}<span className="text-3xl text-gray-300">/100</span>
+            </div>
+          ) : (
+            <div className="text-5xl font-light font-serif text-gray-400">
+              Not Available
+            </div>
+          )}
+        </div>
+        <div className="text-xl font-medium text-gray-800 mb-4">{label}</div>
+        
+        {overallScore === 0 ? (
+          <div className="mt-4 max-w-md mx-auto">
+            <p className="text-sm text-gray-600 mb-4">
+              This routine has no products yet. Add your cleanser, moisturizer, sunscreen, or treatments to generate an accurate health and compatibility score.
+            </p>
+            <Link
+              href={`/routines/${unwrappedParams.id}`}
+              className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors"
+            >
+              Add Products to Routine
+            </Link>
           </div>
-        </div>
-        <div className="text-xl font-medium text-gray-800 mb-6">{label}</div>
-        
-        <div className="inline-flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-full border border-gray-100 text-sm">
-          <span className="text-gray-500">Analysis Confidence:</span>
-          <span className={`font-medium ${
-            confidence === 'High' ? 'text-teal-600' : 
-            confidence === 'Moderate' ? 'text-amber-600' : 'text-rose-500'
-          }`}>
-            {confidence}
-          </span>
-        </div>
-        
-        {confidence !== 'High' && confidenceReasons.length > 0 && (
-          <p className="text-xs text-gray-500 mt-3 max-w-md mx-auto">{confidenceReasons.join(' ')}</p>
+        ) : (
+          <>
+            <div className="inline-flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-full border border-gray-100 text-sm">
+              <span className="text-gray-500">Analysis Confidence:</span>
+              <span className={`font-medium ${
+                confidence === 'High' ? 'text-teal-600' : 
+                confidence === 'Moderate' ? 'text-amber-600' : 'text-rose-500'
+              }`}>
+                {confidence}
+              </span>
+            </div>
+            
+            {confidence !== 'High' && confidenceReasons?.length > 0 && (
+              <p className="text-xs text-gray-500 mt-3 max-w-md mx-auto">{confidenceReasons.join(' ')}</p>
+            )}
+          </>
         )}
       </div>
 
@@ -192,7 +214,7 @@ export default function RoutineAnalysisPage({ params }: { params: Promise<{ id: 
         <div className="md:col-span-1 space-y-6">
           <h3 className="text-lg font-serif text-gray-900">Score Breakdown</h3>
           
-          {Object.entries(breakdown).map(([key, category]: [string, any]) => (
+          {breakdown && Object.entries(breakdown).map(([key, category]: [string, any]) => (
             <div key={key} className="bg-white rounded-xl border border-gray-200 p-4">
               <div className="flex justify-between items-center mb-2">
                 <span className="font-medium text-sm text-gray-700 capitalize">
@@ -205,11 +227,11 @@ export default function RoutineAnalysisPage({ params }: { params: Promise<{ id: 
               <div className="w-full bg-gray-100 rounded-full h-1.5 mb-3">
                 <div 
                   className="bg-teal-500 h-1.5 rounded-full" 
-                  style={{ width: `${(category.score / category.max) * 100}%` }}
+                  style={{ width: `${category.max > 0 ? (category.score / category.max) * 100 : 0}%` }}
                 ></div>
               </div>
               <div className="space-y-1">
-                {category.reasons.map((reason: string, idx: number) => (
+                {category.reasons && category.reasons.map((reason: string, idx: number) => (
                   <p key={idx} className="text-xs text-gray-600 leading-relaxed">{reason}</p>
                 ))}
               </div>

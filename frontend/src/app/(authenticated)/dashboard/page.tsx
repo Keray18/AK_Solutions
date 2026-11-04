@@ -339,17 +339,31 @@ export default function DashboardPage() {
                           </Box>
 
                           {analysis ? (
-                            <Box sx={{ textAlign: 'right' }}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Typography variant="h5" sx={{ fontWeight: 700, color: analysis.overallScore >= 70 ? 'success.main' : 'warning.main' }}>
-                                  {analysis.overallScore}
+                            r.stepCount === 0 || analysis.overallScore === 0 ? (
+                              <Box sx={{ textAlign: 'right' }}>
+                                <Chip
+                                  label="Analysis Unavailable"
+                                  size="small"
+                                  color="default"
+                                  sx={{ fontWeight: 600, mb: 0.5 }}
+                                />
+                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                  Routine not configured — analysis unavailable.
                                 </Typography>
-                                <Typography variant="caption" color="text.secondary">/100</Typography>
                               </Box>
-                              <Typography variant="caption" color="text.secondary">
-                                Health Score
-                              </Typography>
-                            </Box>
+                            ) : (
+                              <Box sx={{ textAlign: 'right' }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
+                                  <Typography variant="h5" sx={{ fontWeight: 700, color: analysis.overallScore >= 70 ? 'success.main' : 'warning.main' }}>
+                                    {analysis.overallScore}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">/100</Typography>
+                                </Box>
+                                <Typography variant="caption" color="text.secondary">
+                                  Evaluating {r.routineType} Routine
+                                </Typography>
+                              </Box>
+                            )
                           ) : (
                             <Button
                               size="small"

@@ -1,7 +1,7 @@
 import { db } from '../config/database.js';
 import { users } from '../db/schema/users.js';
 import { skinProfiles } from '../db/schema/skinProfiles.js';
-import { routines, routineSteps, routineAnalyses } from '../db/schema/routines.js';
+import { routineSteps, routineAnalyses } from '../db/schema/routines.js';
 import { products } from '../db/schema/products.js';
 import { recommendations } from '../db/schema/recommendations.js';
 import { eq } from 'drizzle-orm';
@@ -329,6 +329,7 @@ async function runAcceptanceGate() {
 
   const eveningRoutine = userRoutines.find((r: any) => r.routineType === 'evening') || userRoutines[0];
   const morningRoutine = userRoutines.find((r: any) => r.routineType === 'morning') || userRoutines[1];
+  assert(!!morningRoutine, 'Morning routine exists');
   const routineId = eveningRoutine.id;
 
   // 1. Run routine analysis
@@ -391,9 +392,10 @@ async function runAcceptanceGate() {
   assert(recHistoryRes.body.data?.length > 0, 'D6: History contains generated recommendation');
 
   // Open single recommendation
-  const singleRecRes = await clientA.request(`/recommendations/${dbRec.id}`);
+  assert(!!dbRec, 'D6.1: Recommendation record exists in database');
+  const singleRecRes = await clientA.request(`/recommendations/${dbRec!.id}`);
   assert(singleRecRes.status === 200, 'D7: GET /recommendations/:id returns detailed record');
-  assert(singleRecRes.body.data?.id === dbRec.id, 'D8: Detailed record matches requested ID');
+  assert(singleRecRes.body.data?.id === dbRec!.id, 'D8: Detailed record matches requested ID');
 
   // ==========================================
   // TEST E: PRODUCT COMPARISON AND REPLACEMENT
@@ -403,12 +405,13 @@ async function runAcceptanceGate() {
   if (allProducts.length >= 2) {
     const prod1 = allProducts[0];
     const prod2 = allProducts[1];
+    assert(!!prod1 && !!prod2, 'E0: Product candidates exist');
 
     // 1. Compare 2 products
     const compRes = await clientA.request('/products/compare', {
       method: 'POST',
       body: {
-        productIds: [prod1.id, prod2.id],
+        productIds: [prod1!.id, prod2!.id],
       },
     });
     assert(compRes.status === 200, 'E1: POST /products/compare succeeds for 2 products');
@@ -429,7 +432,7 @@ async function runAcceptanceGate() {
     }
 
     // 3. Product replacement
-    const replaceRes = await clientA.request(`/products/${prod1.id}/replacements`, {
+    const replaceRes = await clientA.request(`/products/${prod1!.id}/replacements`, {
       method: 'POST',
     });
     assert(replaceRes.status === 200, 'E6: POST /products/:id/replacements succeeds');
@@ -513,6 +516,7 @@ async function runAcceptanceGate() {
   assert(regResB.status === 201, 'H1: User B registered successfully');
   clientB.accessToken = regResB.body.data?.accessToken;
   const userBId = regResB.body.data?.user?.id;
+  assert(!!userBId, 'H1.1: User B ID returned');
 
   // 2. User B creates a routine
   const routineBRes = await clientB.request('/routines', {

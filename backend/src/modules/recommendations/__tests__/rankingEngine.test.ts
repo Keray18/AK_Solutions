@@ -238,5 +238,41 @@ describe('RankingEngine', () => {
       expect(score.penalties).toHaveLength(0);
       expect(score.breakdown.routineCompatibility).toBe(20);
     });
+
+    it('reconciles 6 dimensions to exactly 100 max points and separates medium sensitivity from allergy conflict', () => {
+      const fullContext = {
+        ...mockContext,
+        sensitivity: 'medium', // General profile skin sensitivity
+        knownAllergies: [],    // No declared medical allergens
+        confirmedSensitivities: [],
+        userMonthlyBudget: 100,
+        userBudgetFlexibility: BudgetFlexibility.STRICT,
+      };
+
+      const score = RankingEngine.scoreCandidate(mockProduct, mockIngredients, fullContext);
+
+      // Verify dimensions
+      expect(score.breakdown.skinFit).toBeLessThanOrEqual(20);
+      expect(score.breakdown.concernRelevance).toBeLessThanOrEqual(20);
+      expect(score.breakdown.routineCompatibility).toBeLessThanOrEqual(20);
+      expect(score.breakdown.evidence).toBeLessThanOrEqual(15);
+      expect(score.breakdown.budgetFit).toBeLessThanOrEqual(15);
+      expect(score.breakdown.simplicity).toBeLessThanOrEqual(10);
+
+      // Total earned is scaled to 100 max
+      expect(score.totalScore).toBeLessThanOrEqual(100);
+
+      // Crucial: Medium sensitivity is NOT treated as an allergy conflict
+      expect(score.exclusions).not.toContain(expect.stringContaining('ALLERGEN_CONFLICT'));
+
+      // Now add explicit allergen
+      const contextWithAllergy = {
+        ...fullContext,
+        knownAllergies: ['glycolic acid'],
+      };
+      const scoreWithAllergy = RankingEngine.scoreCandidate(mockProduct, mockIngredients, contextWithAllergy);
+      expect(scoreWithAllergy.exclusions).toContain('ALLERGEN_CONFLICT: glycolic acid');
+      expect(scoreWithAllergy.breakdown.routineCompatibility).toBe(0);
+    });
   });
 });

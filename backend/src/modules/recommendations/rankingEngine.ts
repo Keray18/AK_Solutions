@@ -80,6 +80,31 @@ export class RankingEngine {
     availableMaxPoints += RECOMMENDATION_WEIGHTS.ROUTINE_COMPATIBILITY;
     let compatibilityScore = RECOMMENDATION_WEIGHTS.ROUTINE_COMPATIBILITY;
 
+    // Strict Allergy & Stated Sensitivity Exclusions
+    const allergens = [
+      ...(context.knownAllergies || []),
+      ...(context.confirmedSensitivities || []),
+      ...(context.avoidedIngredients || []),
+    ].map((a) => a.toLowerCase().trim()).filter(Boolean);
+
+    if (allergens.length > 0) {
+      for (const allergen of allergens) {
+        const matchesFragrance = (allergen === 'fragrance' || allergen === 'parfum') && product.hasFragrance;
+        const matchesTitle = product.name?.toLowerCase().includes(allergen);
+        const matchesIng = productIngredients.some((pi) => {
+          const inci = (pi.ingredient?.inciName || pi.inciName || '').toLowerCase();
+          const common = (pi.ingredient?.commonName || pi.commonName || '').toLowerCase();
+          return inci.includes(allergen) || common.includes(allergen);
+        });
+
+        if (matchesFragrance || matchesTitle || matchesIng) {
+          exclusions.push(`ALLERGEN_CONFLICT: ${allergen}`);
+          compatibilityScore = 0;
+          penalties.push(`CONTAINS_REPORTED_ALLERGEN: ${allergen}`);
+        }
+      }
+    }
+
     const hasRoutine = Boolean(
       context.routineId || 
       analysisContext?.morningRoutine || 

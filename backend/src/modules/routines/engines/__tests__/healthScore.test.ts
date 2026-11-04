@@ -101,4 +101,33 @@ describe('HealthScoreEngine', () => {
     const result = HealthScoreEngine.calculate(context, issues);
     expect(result.confidence).toBe('Limited');
   });
+
+  it('should return overallScore 0 and label "Not available" when totalSteps is 0 (preventing 70/100 empty routine bug)', () => {
+    const emptyContext: AnalysisContext = {
+      morningRoutine: {
+        id: '1', userId: '1', routineType: 'morning',
+        steps: []
+      },
+      eveningRoutine: {
+        id: '2', userId: '1', routineType: 'evening',
+        steps: []
+      },
+      skinProfile: {
+        skinType: 'dry',
+        sensitivity: 'medium',
+        concerns: [{ type: 'acne', priority: ConcernPriority.PRIMARY }]
+      },
+      interactionRules: []
+    };
+
+    const result = HealthScoreEngine.calculate(emptyContext, []);
+    expect(result.overallScore).toBe(0);
+    expect(result.label).toBe('Not available');
+    expect(result.overallScore).not.toBe(70);
+    expect(result.breakdown.compatibility.score).toBe(0);
+    expect(result.breakdown.structure.score).toBe(0);
+    expect(result.breakdown.concernCoverage.score).toBe(0);
+    expect(result.breakdown.simplicity.score).toBe(0);
+    expect(result.breakdown.usage.score).toBe(0);
+  });
 });

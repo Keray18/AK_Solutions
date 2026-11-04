@@ -82,7 +82,19 @@ export default function ReplaceProductPage() {
                       <Typography variant="subtitle2" color="primary" sx={{ mb: 1, fontWeight: 700 }}>
                         {item.rank === 1 ? 'BEST FIT' : item.rank === 2 ? 'BUDGET OPTION' : 'ALTERNATIVE'}
                       </Typography>
-                      <Typography variant="h6" sx={{ mb: 1 }}>Product ID: {item.productId}</Typography>
+                      <Typography variant="h6" sx={{ mb: 0.5, fontWeight: 600 }}>
+                        {item.productName || item.product?.name || (item.productId ? `Product (${item.productId.slice(0, 8)})` : 'Product Option')}
+                      </Typography>
+                      {item.brandName && (
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontStyle: 'italic' }}>
+                          by {item.brandName}
+                        </Typography>
+                      )}
+                      {item.price && (
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: 'primary.main', mb: 1 }}>
+                          {item.currency === 'INR' || !item.currency ? '₹' : item.currency} {item.price}
+                        </Typography>
+                      )}
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{item.reason}</Typography>
                       <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Fit Score: {item.score}</Typography>
                     </Paper>

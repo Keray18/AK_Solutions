@@ -8,11 +8,17 @@ import { RoutineType } from '../../../shared/types/enums.js';
 import { AnalysisContext, RoutineContext, RoutineStepContext, SkinProfileContext, InteractionRule } from './types.js';
 
 export class ContextLoader {
-  static async load(userId: string): Promise<AnalysisContext> {
+  static async load(userId: string, targetRoutineId?: string): Promise<AnalysisContext> {
     // 1. Fetch User Routines
     const userRoutines = await db.select().from(routines).where(eq(routines.userId, userId));
-    const morningRow = userRoutines.find(r => r.routineType === RoutineType.MORNING);
-    const eveningRow = userRoutines.find(r => r.routineType === RoutineType.EVENING);
+    const targetRoutine = targetRoutineId ? userRoutines.find(r => r.id === targetRoutineId) : undefined;
+
+    const morningRow = targetRoutine?.routineType === RoutineType.MORNING
+      ? targetRoutine
+      : userRoutines.find(r => r.routineType === RoutineType.MORNING && r.active);
+    const eveningRow = targetRoutine?.routineType === RoutineType.EVENING
+      ? targetRoutine
+      : userRoutines.find(r => r.routineType === RoutineType.EVENING && r.active);
 
     const loadRoutineContext = async (routineRow: typeof routines.$inferSelect | undefined): Promise<RoutineContext | null> => {
       if (!routineRow) return null;

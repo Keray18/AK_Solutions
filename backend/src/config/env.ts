@@ -33,10 +33,18 @@ const envSchema = z.object({
   // Frontend
   FRONTEND_URL: z.string().url().default('http://localhost:3000'),
 
-  // OpenAI
+  // AI Providers
+  PRIMARY_AI_PROVIDER: z.enum(['openai', 'gemini', 'groq', 'grok', 'deterministic']).default('openai'),
+  SECONDARY_AI_PROVIDER: z.enum(['gemini', 'openai', 'groq', 'grok', 'deterministic']).default('gemini'),
+  TERTIARY_AI_PROVIDER: z.enum(['groq', 'gemini', 'openai', 'grok', 'deterministic']).default('groq'),
+  AI_PROVIDER_ORDER: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
   OPENAI_MODEL: z.string().default('gpt-4o-mini'),
   OPENAI_EMBEDDING_MODEL: z.string().default('text-embedding-3-small'),
+  GEMINI_API_KEY: z.string().optional(),
+  GEMINI_MODEL: z.string().default('gemini-3.5-flash'),
+  GROQ_API_KEY: z.string().optional(),
+  GROQ_MODEL: z.string().default('qwen/qwen3.8-27b'),
 
   // Rate Limiting
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),

@@ -1,9 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import { RoutinesService } from './routines.service.js';
-import { createRoutineSchema, updateRoutineSchema } from './routines.schemas.js';
+import { createRoutineSchema, updateRoutineSchema, routineStepSchema } from './routines.schemas.js';
 import { sendSuccess } from '../../shared/utils/apiResponse.js';
 import { RoutineAnalysisService } from './analysis.service.js';
 import { RoutineOptimizer } from './engines/optimizer.js';
+import { ContextLoader } from './engines/contextLoader.js';
+import { db } from '../../config/database.js';
+import { routines, routineSteps } from '../../db/schema/routines.js';
+import { eq, and } from 'drizzle-orm';
 
 export const createRoutine = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -73,10 +77,45 @@ export const getLatestAnalysis = async (req: Request, res: Response, next: NextF
   }
 };
 
-import { ContextLoader } from './engines/contextLoader.js';
-import { db } from '../../config/database.js';
-import { routineSteps } from '../../db/schema/routines.js';
-import { eq } from 'drizzle-orm';
+export const addRoutineStep = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const routineId = req.params.id as string;
+    await RoutinesService.getRoutineById(req.user!.id, routineId);
+
+    const stepData = routineStepSchema.parse(req.body);
+    const [newStep] = await db.insert(routineSteps).values({
+      routineId,
+      productId: stepData.productId || null,
+      customProductName: stepData.customProductName || null,
+      category: stepData.category,
+      stepOrder: stepData.stepOrder,
+      frequency: stepData.frequency,
+      daysUsed: stepData.daysUsed || null,
+      notes: stepData.notes || null,
+    }).returning();
+
+    await db.update(routines).set({ updatedAt: new Date() }).where(eq(routines.id, routineId));
+
+    sendSuccess(res, newStep, 201);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteRoutineStep = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const routineId = req.params.id as string;
+    const stepId = req.params.stepId as string;
+    await RoutinesService.getRoutineById(req.user!.id, routineId);
+
+    await db.delete(routineSteps).where(and(eq(routineSteps.id, stepId), eq(routineSteps.routineId, routineId)));
+    await db.update(routines).set({ updatedAt: new Date() }).where(eq(routines.id, routineId));
+
+    sendSuccess(res, { success: true });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const optimizeRoutine = async (req: Request, res: Response, next: NextFunction) => {
   try {
