@@ -21,6 +21,12 @@ import {
   Drawer,
   useMediaQuery,
   useTheme,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Alert,
+  Snackbar,
 } from '@mui/material';
 import {
   Send as SendIcon,
@@ -247,6 +253,13 @@ export default function AiAssistantPage() {
   const [memoryModalOpen, setMemoryModalOpen] = useState(false);
   const [contextModalOpen, setContextModalOpen] = useState(false);
 
+  // Consultation Deletion Dialog State
+  const [conversationToDelete, setConversationToDelete] = useState<ConversationItem | null>(null);
+  const [isDeletingConversation, setIsDeletingConversation] = useState(false);
+  const [deleteDialogError, setDeleteDialogError] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{ severity: 'success' | 'error' | 'info'; message: string } | null>(null);
+  const cancelDeleteBtnRef = useRef<HTMLButtonElement>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const loadConversations = useCallback(async () => {
@@ -344,18 +357,58 @@ export default function AiAssistantPage() {
     if (isMobile) setHistoryDrawerOpen(false);
   };
 
-  const handleDeleteConversation = async (e: React.MouseEvent, convId: string) => {
+  const handleOpenDeleteDialog = (e: React.MouseEvent, conv: ConversationItem) => {
     e.stopPropagation();
-    if (!window.confirm('Are you sure you want to delete this consultation history?')) return;
+    setDeleteDialogError(null);
+    setConversationToDelete(conv);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    if (isDeletingConversation) return;
+    setConversationToDelete(null);
+    setDeleteDialogError(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!conversationToDelete || isDeletingConversation) return;
+
+    const convId = conversationToDelete.id;
+    setIsDeletingConversation(true);
+    setDeleteDialogError(null);
 
     try {
       await api.delete(`/ai/conversations/${convId}`);
+
+      // Server confirmed success: remove from conversation list
       setConversations((prev) => prev.filter((c) => c.id !== convId));
+
+      // If the deleted conversation was active, show the empty/new-consultation state
+      // If it was not active, preserve current conversation
       if (activeConversationId === convId) {
         handleNewConversation();
       }
-    } catch (err) {
+
+      setNotification({
+        severity: 'success',
+        message: 'Consultation deleted successfully.',
+      });
+
+      setConversationToDelete(null);
+    } catch (err: any) {
       console.error('Failed to delete conversation:', err);
+      const errMsg =
+        err.response?.data?.error?.message ||
+        err.response?.data?.message ||
+        err.message ||
+        'Failed to delete consultation. Please try again.';
+      setDeleteDialogError(errMsg);
+      setNotification({
+        severity: 'error',
+        message: errMsg,
+      });
+      // Conversation remains in list on error
+    } finally {
+      setIsDeletingConversation(false);
     }
   };
 
@@ -495,8 +548,18 @@ export default function AiAssistantPage() {
                   <IconButton
                     edge="end"
                     size="small"
-                    onClick={(e) => handleDeleteConversation(e, conv.id)}
-                    sx={{ opacity: isSelected ? 1 : 0.6 }}
+                    data-testid={`delete-consultation-btn-${conv.id}`}
+                    aria-label={`Delete consultation ${conv.title || conv.lastMessageSnippet || 'history'}`}
+                    onClick={(e) => handleOpenDeleteDialog(e, conv)}
+                    sx={{
+                      opacity: isSelected ? 1 : 0.6,
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        opacity: 1,
+                        color: 'error.main',
+                        bgcolor: 'rgba(220, 38, 38, 0.08)',
+                      },
+                    }}
                   >
                     <DeleteIcon fontSize="small" />
                   </IconButton>
@@ -505,6 +568,7 @@ export default function AiAssistantPage() {
               >
                 <ListItemButton
                   data-testid="consultation-history-item"
+                  data-conv-id={conv.id}
                   selected={isSelected}
                   onClick={() => handleSelectConversation(conv.id)}
                   sx={{
@@ -590,6 +654,7 @@ export default function AiAssistantPage() {
       {!isMobile && (
         <Paper
           elevation={0}
+          data-testid="desktop-conversations-sidebar"
           sx={{
             width: 280,
             minWidth: 280,
@@ -968,6 +1033,186 @@ export default function AiAssistantPage() {
           setMemoryModalOpen(true);
         }}
       />
+
+      {/* Accessible Consultation Deletion Confirmation Dialog */}
+      <Dialog
+        open={Boolean(conversationToDelete)}
+        onClose={() => {
+          if (!isDeletingConversation) {
+            handleCloseDeleteDialog();
+          }
+        }}
+        maxWidth="xs"
+        fullWidth
+        aria-labelledby="delete-consultation-dialog-title"
+        aria-describedby="delete-consultation-dialog-description"
+        slotProps={{
+          transition: {
+            onEntered: () => {
+              cancelDeleteBtnRef.current?.focus();
+            },
+          },
+          paper: {
+            sx: {
+              borderRadius: 3,
+              p: 1,
+              boxShadow: '0px 20px 25px rgba(0, 0, 0, 0.1)',
+            },
+          },
+        }}
+      >
+        <DialogTitle
+          id="delete-consultation-dialog-title"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            pb: 1,
+            fontWeight: 700,
+            fontSize: '1.125rem',
+          }}
+        >
+          <Box
+            sx={{
+              width: 36,
+              height: 36,
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: 'rgba(220, 38, 38, 0.1)',
+              color: 'error.main',
+              flexShrink: 0,
+            }}
+          >
+            <DeleteIcon fontSize="small" />
+          </Box>
+          Delete consultation?
+        </DialogTitle>
+
+        <DialogContent sx={{ pt: 1, pb: 2 }}>
+          <Typography
+            id="delete-consultation-dialog-description"
+            variant="body2"
+            color="text.secondary"
+            sx={{ mb: 2, lineHeight: 1.6 }}
+          >
+            Are you sure you want to delete this consultation? This action permanently removes its conversation history, clinical reasoning records, and recommendations. This cannot be undone.
+          </Typography>
+
+          {conversationToDelete && (
+            <Box
+              sx={{
+                p: 1.5,
+                borderRadius: 2,
+                bgcolor: 'background.default',
+                border: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              <Typography
+                variant="subtitle2"
+                data-testid="delete-dialog-consultation-title"
+                sx={{
+                  fontWeight: 600,
+                  color: 'text.primary',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {conversationToDelete.title || conversationToDelete.lastMessageSnippet || 'Consultation'}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {new Date(conversationToDelete.updatedAt).toLocaleDateString([], {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}{' '}
+                • {conversationToDelete.messageCount}{' '}
+                {conversationToDelete.messageCount === 1 ? 'message' : 'messages'}
+              </Typography>
+            </Box>
+          )}
+
+          {deleteDialogError && (
+            <Alert
+              severity="error"
+              data-testid="delete-dialog-error"
+              sx={{ mt: 2, borderRadius: 2 }}
+            >
+              {deleteDialogError}
+            </Alert>
+          )}
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 2, pt: 1, gap: 1 }}>
+          <Button
+            ref={cancelDeleteBtnRef}
+            autoFocus
+            data-testid="cancel-delete-consultation-btn"
+            onClick={handleCloseDeleteDialog}
+            variant="outlined"
+            color="inherit"
+            disabled={isDeletingConversation}
+            sx={{
+              borderRadius: 2,
+              textTransform: 'none',
+              px: 2,
+              borderColor: 'divider',
+              fontWeight: 600,
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            data-testid="confirm-delete-consultation-btn"
+            onClick={handleConfirmDelete}
+            variant="contained"
+            color="error"
+            disabled={isDeletingConversation}
+            startIcon={
+              isDeletingConversation ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <DeleteIcon fontSize="small" />
+              )
+            }
+            sx={{
+              borderRadius: 2,
+              textTransform: 'none',
+              px: 2,
+              fontWeight: 600,
+              boxShadow: 'none',
+              bgcolor: 'error.main',
+              '&:hover': {
+                bgcolor: 'error.dark',
+                boxShadow: '0px 4px 12px rgba(220, 38, 38, 0.3)',
+              },
+            }}
+          >
+            {isDeletingConversation ? 'Deleting...' : 'Delete consultation'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Feedback Notification Snackbar */}
+      <Snackbar
+        open={Boolean(notification)}
+        autoHideDuration={5000}
+        onClose={() => setNotification(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        {notification ? (
+          <Alert
+            onClose={() => setNotification(null)}
+            severity={notification.severity}
+            sx={{ width: '100%', borderRadius: 2, boxShadow: 3 }}
+          >
+            {notification.message}
+          </Alert>
+        ) : undefined}
+      </Snackbar>
     </Box>
   );
 }
