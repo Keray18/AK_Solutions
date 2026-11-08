@@ -6,11 +6,12 @@ import { sendCreated, sendSuccess } from '../../shared/utils/apiResponse.js';
 import { env } from '../../config/env.js';
 
 const COOKIE_NAME = 'skinai_refresh';
+const isProd = env.NODE_ENV === 'production';
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: env.NODE_ENV === 'production',
+  secure: isProd,
   sameSite: 'lax' as const,
-  path: '/api/auth/refresh',
+  path: '/',
   maxAge: parseInt(env.JWT_REFRESH_EXPIRY.replace('d', ''), 10) * 24 * 60 * 60 * 1000,
 };
 

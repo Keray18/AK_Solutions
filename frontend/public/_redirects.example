@@ -1,0 +1,4 @@
+# SkinAI Netlify Edge Redirect Rule (Alternative to Next.js rewrites)
+# Replace https://your-backend.up.railway.app with your live Railway URL
+/api/*  https://your-backend.up.railway.app/api/:splat  200!
+

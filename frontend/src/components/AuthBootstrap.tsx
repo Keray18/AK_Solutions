@@ -16,7 +16,7 @@ export function AuthBootstrap({ children }: { children: React.ReactNode }) {
     async function initAuth() {
       try {
         setLoading(true);
-        // Attempt to refresh the token using the HttpOnly cookie
+        // Attempt to refresh the token using HttpOnly cookie
         const response = await api.post('/auth/refresh');
         const { accessToken, user } = response.data.data;
         login(user, accessToken);

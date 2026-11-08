@@ -2,7 +2,7 @@ import { authRepository } from './auth.repository.js';
 import { tokenService } from './token.service.js';
 import { passwordService } from './password.service.js';
 import { generateSecureToken, hashToken } from '../../shared/utils/crypto.js';
-import { ConflictError, UnauthorizedError, BadRequestError } from '../../shared/types/errors.js';
+import { ConflictError, UnauthorizedError, BadRequestError, ForbiddenError } from '../../shared/types/errors.js';
 import type { RegisterInput, LoginInput, ResetPasswordInput, ForgotPasswordInput } from './auth.schemas.js';
 import { logger } from '../../config/logger.js';
 import { UserRole } from '../../shared/types/enums.js';
@@ -10,6 +10,42 @@ import { env } from '../../config/env.js';
 
 export const authService = {
   async register(input: RegisterInput) {
+    // Private beta access gate check
+    if (env.BETA_ACCESS_ENABLED) {
+      const normalizedEmail = input.email.toLowerCase().trim();
+
+      // 1. If an email allowlist is configured, verify the email is on the list
+      if (env.BETA_ALLOWED_EMAILS) {
+        const allowedEmails = env.BETA_ALLOWED_EMAILS.split(',')
+          .map((e) => e.trim().toLowerCase())
+          .filter(Boolean);
+        if (!allowedEmails.includes(normalizedEmail)) {
+          throw new ForbiddenError(
+            'This email address is not authorized for the private beta. Please register with your invited email address.'
+          );
+        }
+      }
+
+      // 2. Invitation Code Verification
+      // Note: Email allowlisting alone is NOT proof of email ownership when email verification is disabled.
+      // Therefore, a valid invitation code is strictly required whenever BETA_INVITE_CODE is configured
+      // or when EMAIL_VERIFICATION_REQUIRED is false.
+      if (env.BETA_INVITE_CODE) {
+        const validCodes = env.BETA_INVITE_CODE.split(',').map((c) => c.trim()).filter(Boolean);
+        const submittedCode = input.inviteCode?.trim();
+        if (!submittedCode || !validCodes.includes(submittedCode)) {
+          throw new ForbiddenError(
+            'SkinAI is currently in private preview. A valid beta invitation code is required to create an account.'
+          );
+        }
+      } else if (!env.EMAIL_VERIFICATION_REQUIRED) {
+        // If no invite code configured AND email verification is disabled, registration cannot prove ownership
+        throw new ForbiddenError(
+          'Private beta registration requires an invitation code when email verification is disabled.'
+        );
+      }
+    }
+
     const existingUser = await authRepository.findUserByEmail(input.email);
     if (existingUser) {
       throw new ConflictError('EMAIL_ALREADY_EXISTS');

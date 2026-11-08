@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authenticate as requireAuth } from '../../middleware/authenticate.js';
+import { aiLimiter } from '../../middleware/rateLimiter.js';
 import * as controller from './ai.controller.js';
 
 const router = Router();
@@ -9,8 +10,8 @@ router.get('/knowledge', controller.retrieveKnowledge);
 
 // Protected AI endpoints
 router.use(requireAuth);
-router.post('/ask', controller.askQuestion);
-router.post('/explain-routine/:routineId', controller.explainRoutine);
+router.post('/ask', aiLimiter, controller.askQuestion);
+router.post('/explain-routine/:routineId', aiLimiter, controller.explainRoutine);
 
 // Conversations & Memory
 router.get('/conversations', controller.getConversations);

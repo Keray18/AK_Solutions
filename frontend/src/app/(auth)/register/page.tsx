@@ -25,6 +25,7 @@ const registerSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   confirmPassword: z.string(),
+  inviteCode: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ['confirmPassword'],
@@ -59,6 +60,7 @@ export default function RegisterPage() {
         name: data.name,
         email: data.email,
         password: data.password,
+        inviteCode: data.inviteCode?.trim() || undefined,
       });
 
       if (response.data?.data?.accessToken) {
@@ -119,6 +121,10 @@ export default function RegisterPage() {
         </Alert>
       )}
 
+      <Alert severity="info" sx={{ mb: 3, borderRadius: 2, fontSize: '0.875rem' }}>
+        <strong>Friends & Family Beta:</strong> Registration is currently private. If you have an invite code or invited email address, you can create your account below.
+      </Alert>
+
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <Stack spacing={3}>
           <TextField
@@ -137,6 +143,16 @@ export default function RegisterPage() {
             type="email"
             error={!!errors.email}
             helperText={errors.email?.message}
+            disabled={isLoading}
+          />
+
+          <TextField
+            {...register('inviteCode')}
+            fullWidth
+            label="Beta Invitation Code"
+            placeholder="Enter your invitation code"
+            error={!!errors.inviteCode}
+            helperText={errors.inviteCode?.message || 'Required for registration during the private friends & family beta'}
             disabled={isLoading}
           />
 

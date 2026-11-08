@@ -13,7 +13,18 @@ export const askQuestion = async (req: Request, res: Response, next: NextFunctio
       return;
     }
 
-    const result = await AIService.askQuestion(userId, question, conversationId);
+    const trimmedQuestion = question.trim();
+    if (!trimmedQuestion) {
+      res.status(400).json({ status: 'error', message: 'Question cannot be empty' });
+      return;
+    }
+
+    if (trimmedQuestion.length > 1000) {
+      res.status(400).json({ status: 'error', message: 'Question exceeds maximum limit of 1,000 characters' });
+      return;
+    }
+
+    const result = await AIService.askQuestion(userId, trimmedQuestion, conversationId);
     sendSuccess(res, result);
   } catch (err) {
     next(err);

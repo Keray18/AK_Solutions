@@ -4,10 +4,10 @@ import { logger } from './config/logger.js';
 
 const PORT = env.PORT;
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   logger.info(`🧴 SkinAI API server running on port ${PORT}`);
   logger.info(`📍 Environment: ${env.NODE_ENV}`);
-  logger.info(`🔗 Health check: http://localhost:${PORT}/health`);
+  logger.info(`🔗 Health check: http://0.0.0.0:${PORT}/health`);
 });
 
 // Graceful shutdown

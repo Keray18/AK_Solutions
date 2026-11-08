@@ -1,0 +1,16 @@
+# ============================================================
+# SkinAI Frontend — Netlify Configuration
+# Compatible with Next.js 16 runtime (@netlify/plugin-nextjs)
+# ============================================================
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Reverse Proxy fallback for edge CDN routing
+# When BACKEND_URL is set in Netlify environment variables,
+# Next.js rewrites in next.config.ts automatically proxy /api to the Railway backend.
+

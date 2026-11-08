@@ -30,8 +30,13 @@ const envSchema = z.object({
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().email().default('noreply@skinai.in'),
 
-  // Frontend
-  FRONTEND_URL: z.string().url().default('http://localhost:3000'),
+  // Frontend (comma-separated origins allowed for production + staging/localhost)
+  FRONTEND_URL: z.string().default('http://localhost:3000'),
+
+  // Private Friends & Family Beta Gate
+  BETA_ACCESS_ENABLED: z.preprocess((v) => v === 'true' || v === true, z.boolean().default(false)),
+  BETA_INVITE_CODE: z.string().optional(),
+  BETA_ALLOWED_EMAILS: z.string().optional(), // Comma-separated allowlist of emails
 
   // AI Providers
   PRIMARY_AI_PROVIDER: z.enum(['openai', 'gemini', 'groq', 'grok', 'deterministic']).default('openai'),
