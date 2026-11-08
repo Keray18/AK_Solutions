@@ -1,0 +1,4 @@
+# SkinAI Netlify Edge Reverse Proxy Rule
+# Proxies same-origin /api/* calls to Railway backend with first-party cookie preservation
+/api/*  https://enthusiastic-peace-production-2de4.up.railway.app/api/:splat  200!
+
